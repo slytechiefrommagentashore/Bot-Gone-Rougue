@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot Gone Rogue — Mission Computer</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+  <style>
+    body {
+      background: #0b0b0b;
+      color: #00ff00;
+      font-family: monospace;
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 30px #00ff00aa;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+class BotScene extends Phaser.Scene {
+  constructor() { super('BotScene'); }
+
+  preload() {
+    this.load.image('bot', 'assets/bot.png');
+    this.load.image('glitch', 'assets/glitch.png');
+    this.load.audio('beep', 'assets/sounds/beep.mp3');
+    this.load.audio('boom', 'assets/sounds/explosion.mp3');
+    //this.load.audio('success', 'assets/sounds/success.mp3');
+   // this.load.audio('error', 'assets/sounds/error.mp3');
+   // this.load.audio('laugh', 'assets/sounds/laugh.mp3');
+  }
+
+  create() {
+    this.chaos = 0; this.score = 0;
+    this.missionActive = false; this.easyMode = false;
+    this.personality = "neutral"; // can be "neutral", "sassy", "grumpy", "malfunctioning"
+    this.jokeCount = 0;
+
+
+    // Background + bot sprite
+    this.add.rectangle(400, 300, 800, 620, 0x0a0a0a, 1);
+    this.bot = this.add.sprite(400, 300, 'bot').setScale(0.8);
+
+    this.add.rectangle(400, 300, 800, 620, 0x0a0a0a, 1);
+    this.bot = this.add.sprite(400, 300, 'bot').setScale(0.8);
+    
+    // ✨ ADD THIS LINE:
+    this.bot.setTint(0x00ff00); // Tints the whole sprite green
+
+    // Sound refs
+    this.beep = this.sound.add('beep');
+    this.boom = this.sound.add('boom');
+   // this.successSound = this.sound.add('success');
+   // this.errorSound = this.sound.add('error');
+   // this.laughSound = this.sound.add('laugh');
+
+    // Glitch overlay
+    this.glitch = this.add.image(400, 300, 'glitch').setAlpha(0);
+
+    // UI text + chaos bar
+    this.logText = this.add.text(20, 20, "Bot Gone Rogue — Mission Computer\n",
+      { font: "16px monospace", fill: "#00ff00", wordWrap: { width: 760 } });
+
+    this.add.text(20, 420, "Office Stability", { font: "14px monospace", fill: "#0f0" });
+    this.chaosBar = this.add.rectangle(20, 440, 0, 10, 0x00ff00).setOrigin(0);
+    this.chaosLabel = this.add.text(20, 470, "Chaos Level: 0%", { font: "14px monospace", fill: "#0f0" });
+    // Move timer & score to top-right corner
+  this.timerText = this.add.text(780, 20, "Time: 0s | Score: 0", {
+    font: "14px monospace",
+    fill: "#0f0",
+  }).setOrigin(1, 0); // 👈 anchor right edge
+
+// Command data with visible point values
+const commandStats = {
+  "Clean Desk": { points: 5 },
+  "Organize Room": { points: 10 },
+  "Fix Computer": { points: 20 },
+  "Make Coffee": { points: 8 },
+  "Save Project": { points: 15 },
+  "Shutdown": { points: 25 },
+  "Tell me a joke": { points: 0 }
+};
+
+// Dynamically make buttons with points shown
+const actions = Object.keys(commandStats);
+actions.forEach((a, i) => {
+  const pts = commandStats[a].points;
+  const label = `${a} (+${pts})`; // visible score beside name
+  const btn = this.add.text(
+    20 + (i % 3) * 250, 
+    500 + Math.floor(i / 3) * 40,
+    label,
+    { font: "18px monospace", fill: "#00ff00" }
+  )
+  .setInteractive()
+  .on('pointerdown', () => { 
+    this.beep.play(); 
+    this.handleCommand(a); 
+  });
+
+  // Small hover highlight
+  btn.on('pointerover', () => btn.setFill("#ffffff"));
+  btn.on('pointerout', () => btn.setFill("#00ff00"));
+});
+
+
+    this.showIntro();
+  }
+
+showIntro() {
+    // ✨ 1. Create one container to hold all intro elements
+    const introContainer = this.add.container(0, 0);
+
+    const bg = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.8);
+    const box = this.add.rectangle(400, 300, 700, 300, 0x111111, 0.8).setStrokeStyle(2, 0x00ff00);
+    const title = this.add.text(150, 160, "BOT GONE ROGUE — MISSION BRIEFING",
+      { font: "20px monospace", fill: "#00ff00" });
+
+    // ✨ 2. Add the first few elements to the container
+    introContainer.add([bg, box, title]);
+
+    const lines = [
+      "You built an AI office assistant to automate tasks.",
+      "But it misunderstands everything.", "",
+      "Your mission:",
+      "1. Send commands like 'Clean Desk', 'Fix Computer', 'Make Coffee'.",
+      "2. Sometimes the bot misbehaves — chaos rises!",
+      "3. Keep chaos below 100% or the office is destroyed.", "",
+      "Good luck, human operator."
+    ];
+    
+    let y = 200;
+    lines.forEach(l => {
+      // ✨ 3. Create the text line...
+      const lineText = this.add.text(160, y, l, { font: "16px monospace", fill: "#00ff00" });
+      // ✨ ...and add it to the container!
+      introContainer.add(lineText);
+      y += 22;
+    });
+
+    const startBtn = this.add.text(250, 460, "▶️ Start Mission", { font: "18px monospace", fill: "#00ff00" })
+      .setInteractive().on('pointerdown', () => {
+        this.easyMode = false;
+        // ✨ 4. Pass the *entire container* to be destroyed
+        this.startGame(introContainer);
+      });
+
+    const easyBtn = this.add.text(450, 460, "🧩 Easy Mode", { font: "18px monospace", fill: "#00ff00" })
+      .setInteractive().on('pointerdown', () => {
+        this.easyMode = true;
+        // ✨ 5. Pass the *entire container* to be destroyed
+        this.startGame(introContainer);
+      });
+
+    // ✨ 6. Add the buttons to the container
+    introContainer.add([startBtn, easyBtn]);
+  }
+
+  startGame(introContainer) { // ✨ Changed parameter
+    // ✨ Destroy the one container, which destroys all its children
+    introContainer.destroy(); 
+    
+    this.missionActive = true;
+    this.startTime = this.time.now;
+    this.log("> System: Mission started. Keep chaos under control!");
+  }
+
+handleCommand(cmd) {
+  if (!this.missionActive) return;
+
+if (cmd === "Tell me a joke") {
+  this.jokeCount++;
+//  this.laughSound.play();
+
+  // Determine mood-based response
+  const neutralJokes = [
+    "Bot: I told the cloud a secret… now it’s leaking.",
+    "Bot: Coffee is just bean juice. Think about it.",
+    "Bot: I once tried meditation… crashed at inner peace.exe."
+  ];
+  const sassyJokes = [
+    "Bot: Again with the jokes? I'm not your stand-up circuit board!",
+    "Bot: Do I look like a clown algorithm to you?",
+    "Bot: I'm charging you 1 chaos point per joke now."
+  ];
+  const grumpyJokes = [
+    "Bot: Too much chaos. Not enough RAM for humor.",
+    "Bot: I’d laugh, but the office is on fire.",
+    "Bot: Humor module offline. Try again later."
+  ];
+  const malfunctionJokes = [
+    "Bot: 01001000 01100001 01101000 01100001… *glitches out*",
+    "Bot: Heh…heh…what is 'funny'? Are we funny?",
+    "Bot: SYSTEM HUMOR.EXE NOT FOUND."
+  ];
+
+  let jokeList = neutralJokes;
+  if (this.personality === "sassy") jokeList = sassyJokes;
+  else if (this.personality === "grumpy") jokeList = grumpyJokes;
+  else if (this.personality === "malfunctioning") jokeList = malfunctionJokes;
+
+  const joke = Phaser.Utils.Array.GetRandom(jokeList);
+  this.log(`> ${joke}`);
+
+  // Small effect
+  if (this.personality === "neutral") this.chaos = Math.max(0, this.chaos - 2);
+  if (this.personality === "sassy") this.chaos += 2;
+  this.updateChaosBar();
+
+  // Personality evolution rules
+  if (this.jokeCount > 3 && this.personality === "neutral") {
+    this.personality = "sassy";
+    this.log("> Bot: I'm not a comedian, you know...");
+  }
+
+  return;
+}
+
+  // Initialize trackers if not set yet
+  this.commandCount = this.commandCount || 0;
+  this.lastCommand = this.lastCommand || null;
+  this.repeatCount = this.repeatCount || 0;
+
+  // --- Shutdown restriction BEFORE counting ---
+if (cmd === "Shutdown" && this.commandCount < 10) {
+  const remaining = 10 - this.commandCount;
+  this.log(`> Shutdown command locked. Complete ${remaining} more task${remaining > 1 ? "s" : ""} first.`);
+  this.beep.play();
+  return;
+}
+
+  // --- Count and repetition check ---
+  if (this.lastCommand === cmd) {
+    this.repeatCount++;
+  } else {
+    this.repeatCount = 1;
+    this.lastCommand = cmd;
+  }
+
+  // If repeated too much, reject
+  if (this.repeatCount > 3) {
+    this.log(`> Bot bored of doing "${cmd}". Give another command!`);
+    this.beep.play();
+    return;
+  }
+
+  // Count valid commands (Shutdown excluded early)
+  this.commandCount++;
+
+  // --- Perform the task normally ---
+  this.botMove();
+  this.beep.play();
+
+  const commandStats = {
+    "Clean Desk": { points: 5, risk: 0.2 },
+    "Organize Room": { points: 10, risk: 0.35 },
+    "Fix Computer": { points: 20, risk: 0.45 },
+    "Make Coffee": { points: 8, risk: 0.35 },
+    "Save Project": { points: 15, risk: 0.55 },
+    "Shutdown": { points: 25, risk: 0.6 },
+    "Tell me a joke": { points: 0 } 
+  };
+
+  const stats = commandStats[cmd] || { points: 5, risk: 0.3 };
+  let risk = stats.risk;
+  let pts = stats.points;
+
+  // Adjust by chaos state
+  if (this.chaos > 70) risk += 0.15;
+  if (this.chaos < 30) pts = Math.floor(pts * 1.5);
+
+  const bad = Math.random() < (this.easyMode ? risk - 0.15 : risk);
+
+if (bad) {
+  const add = Phaser.Math.Between(8, 18);
+  this.chaos += add;
+  this.glitchFlash();
+  this.errorSound.play();
+  
+  const failResponses = [
+    `Bot: Misinterpreted "${cmd}" again... oops.`,
+    `Bot: Uh... I think I broke it.`,
+    `Bot: Not my fault! Probably.`,
+  ];
+  this.log(`> ${Phaser.Utils.Array.GetRandom(failResponses)} Chaos +${add}%`);
+} else {
+  const reduce = Phaser.Math.Between(2, 6);
+  this.chaos = Math.max(0, this.chaos - reduce);
+  this.score += pts;
+  //this.successSound.play();
+
+  const successResponses = [
+    `Bot: "${cmd}" executed flawlessly.`,
+    `Bot: Task complete. Efficiency rising.`,
+    `Bot: I live to serve... mostly.`,
+  ];
+  this.log(`> ${Phaser.Utils.Array.GetRandom(successResponses)} +${pts} pts | Chaos -${reduce}%`);
+}
+
+  this.updateChaosBar();
+
+  // Special case: Shutdown ends mission safely
+  if (cmd === "Shutdown" && this.chaos < 40 && !bad) {
+    this.log("> Shutdown sequence completed. Mission success!");
+    this.endGame(true);
+  }
+}
+
+
+  botMove(){
+    const x=Phaser.Math.Between(100,700), y=Phaser.Math.Between(150,400);
+    this.tweens.add({ targets:this.bot, x, y, duration:300, ease:"Sine.easeInOut" });
+  }
+
+    glitchFlash(){
+    this.glitch.setAlpha(0.8);
+    this.glitch.setTint(0xff00ff); // 🔮 magenta flicker
+    this.cameras.main.shake(100, 0.01); // 💥 tiny camera shake
+    this.tweens.add({
+        targets: this.glitch,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => this.glitch.clearTint()
+    });
+    }
+
+
+  log(msg){
+    const lines=this.logText.text.split("\n");
+    if(lines.length>10)lines.shift(); lines.push(msg);
+    this.logText.setText(lines.join("\n"));
+  }
+
+updateChaosBar() {
+  this.chaosBar.width = (this.chaos / 100) * 760;
+  this.chaosLabel.setText(`Chaos Level: ${Math.floor(this.chaos)}%`);
+  
+  // Color logic
+  const oldColor = this.chaosBar.fillColor;
+  const newColor =
+    this.chaos < 30 ? 0x00ff00 :
+    this.chaos < 70 ? 0xffff00 :
+    0xff0000;
+  this.chaosBar.fillColor = newColor;
+
+  if (newColor !== oldColor) {
+    this.tweens.add({
+      targets: this.chaosBar,
+      alpha: { from: 0.5, to: 1 },
+      duration: 150,
+      repeat: 2,
+      yoyo: true,
+    });
+  }
+
+  if (this.chaos >= 100) this.endGame(false);
+
+  // Updates personality dynamically
+  const prevPersonality = this.personality;
+  if (this.chaos > 80) this.personality = "malfunctioning";
+  else if (this.chaos > 60) this.personality = "grumpy";
+  else if (this.personality !== "sassy") this.personality = "neutral";
+
+  if (this.personality !== prevPersonality) {
+    this.log(`> ⚠ Personality drift detected: Bot is now ${this.personality.toUpperCase()}.`);
+  }
+}
+
+
+endGame(success) {
+  this.missionActive = false;
+  this.bot.setTint(success ? 0x00ff00 : 0xff0000);
+  this.bgMusic?.stop();
+  this.beep.stop();
+
+if (success) {
+  this.log("> Mission Complete! System stable.");
+  this.sound.play("beep");
+} else {
+  this.log("> System Failure! Office in ruins.");
+  this.boom.play(); // ✅ matches preloaded sound
+}
+
+
+  // 🪩 Show overlay
+  this.showGameOver(success);
+}
+
+
+// 🧨 GAME OVER OVERLAY
+showGameOver(success) {
+  // Dim background
+  const overlay = this.add.rectangle(
+    this.cameras.main.centerX,
+    this.cameras.main.centerY,
+    this.scale.width,
+    this.scale.height,
+    0x000000,
+    0.7
+  ).setScrollFactor(0).setDepth(100);
+
+  // Text headline
+  const title = success ? "MISSION COMPLETE" : "SYSTEM FAILURE";
+  const color = success ? "#00ff88" : "#ff4444";
+
+  const titleText = this.add.text(
+    this.cameras.main.centerX,
+    this.cameras.main.centerY - 40,
+    title,
+    { font: "42px monospace", fill: color }
+  ).setOrigin(0.5).setDepth(101);
+
+  // Subtext
+  const msg = success
+    ? "Office stabilized. Bot under control"
+    : "Bot went rogue. Office destroyed";
+  const subText = this.add.text(
+    this.cameras.main.centerX,
+    this.cameras.main.centerY + 10,
+    msg,
+    { font: "20px monospace", fill: "#cccccc" }
+  ).setOrigin(0.5).setDepth(101);
+
+  // Restart button
+  const btn = this.add.text(
+    this.cameras.main.centerX,
+    this.cameras.main.centerY + 70,
+    "▶ RESTART MISSION",
+    { font: "22px monospace", fill: "#00ff00", backgroundColor: "#003300", padding: { x: 10, y: 5 } }
+  )
+    .setOrigin(0.5)
+    .setDepth(101)
+    .setInteractive()
+    .on("pointerdown", () => {
+      this.sound.play("beep");
+      this.scene.restart();
+    })
+    .on("pointerover", () => btn.setStyle({ fill: "#ffffff" }))
+    .on("pointerout", () => btn.setStyle({ fill: "#00ff00" }));
+
+  // Optional animation
+  this.tweens.add({
+    targets: [titleText],
+    scale: { from: 0.9, to: 1.1 },
+    duration: 700,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut"
+  });
+}
+
+  update(){
+    if(!this.missionActive)return;
+    const t=Math.floor((this.time.now-this.startTime)/1000);
+    this.timerText.setText(`Time: ${t}s | Score: ${this.score}`);
+    if(t%(this.easyMode?6:4)===0&&Math.random()<0.02){this.chaos+=1;this.updateChaosBar();}
+  }
+}
+
+new Phaser.Game({ type:Phaser.AUTO, width:800, height:620, backgroundColor:"#111", scene:BotScene });
+</script>
+
+
+</body>
+</html>
