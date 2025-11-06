@@ -30,8 +30,8 @@ class BotScene extends Phaser.Scene {
   preload() {
     this.load.image('bot', 'assets/bot.png');
     this.load.image('glitch', 'assets/glitch.png');
-    this.load.audio('beep', 'assets/beep.mp3');
-    this.load.audio('boom', 'assets/explosion.mp3');
+    this.load.audio('beep', 'assets/sounds/beep.mp3');
+    this.load.audio('boom', 'assets/sounds/explosion.mp3');
     //this.load.audio('success', 'assets/sounds/success.mp3');
    // this.load.audio('error', 'assets/sounds/error.mp3');
    // this.load.audio('laugh', 'assets/sounds/laugh.mp3');
@@ -130,10 +130,10 @@ this.hintButton = this.add.text(780, 60, "💡 Hint", {
 .setOrigin(1, 0)
 .setInteractive();
 
-// Hint tooltip (hidden initially)
+// 🧠 Hint tooltip (hidden initially)
 this.hintTooltip = this.add.text(
   400, 100,
-  "Hint:\nKeep Office Instability (Chaos) below 40%.\nThen issue the 'Shutdown' command — remember,\n'Shutdown' is a command, not the end of the game!\nMission ends only when the system confirms stability.",
+  "🧠 Hint:\nKeep Office Instability (Chaos) below 40%.\nThen issue the 'Shutdown' command — remember,\n'Shutdown' is a command, not the end of the game!\nMission ends only when the system confirms stability.",
   {
     font: "14px monospace",
     fill: "#00ff00",
@@ -181,16 +181,20 @@ showHowToPlay() {
     fill: "#00ff00",
   }).setOrigin(0.5).setDepth(202);
 
-  const textLines = [
-    "▶ Click commands at the bottom to instruct the bot.",
-    "▶ Each command has a success chance and chaos risk.",
+const textLines = [
+    "▶ **YOUR GOAL:** Successfully shut down the bot.",
+    "▶ **HOW TO WIN:**",
+    "▶ 1. Issue at least 10 commands to unlock 'Shutdown'.",
+    "▶ 2. Keep the Chaos Level below 40%.",
+    "▶ 3. Click 'Shutdown' (while chaos is low) to win!",
+    "",
+    "▶ **RULES & TIPS:**",
     "▶ Success = +points, Chaos decreases.",
     "▶ Failure = Chaos increases.",
-    "▶ Don’t repeat the same command more than 3 times!",
-    "▶ Shutdown unlocks after 9 commands.",
-    "▶ Keep chaos < 100% to avoid total system failure.",
-    "",
-    "Tip: Try 'Tell me a joke' to test the bot’s humor!"
+    "▶ Don't repeat the same command more than 3 times!",
+    "▶ **PRO TIP:** Get a 1.5x score bonus for tasks", 
+    "▶ completed while Chaos is below 30%!",      
+    "▶ If Chaos hits 100%, you lose immediately."
   ];
 
   let y = 150;
@@ -249,28 +253,25 @@ showIntro() {
     
     let y = 200;
     lines.forEach(l => {
-      // ✨ 3. Create the text line...
       const lineText = this.add.text(160, y, l, { font: "16px monospace", fill: "#00ff00" });
-      // ✨ ...and add it to the container!
+      // ✨ ...and add it to the conta
       introContainer.add(lineText);
       y += 22;
     });
 
-    const startBtn = this.add.text(250, 460, "▷ Start Mission", { font: "18px monospace", fill: "#00ff00" })
+    const startBtn = this.add.text(250, 460, "▶️ Start Mission", { font: "18px monospace", fill: "#00ff00" })
       .setInteractive().on('pointerdown', () => {
         this.easyMode = false;
-        // ✨ 4. Pass the *entire container* to be destroyed
         this.startGame(introContainer);
       });
 
-    const easyBtn = this.add.text(450, 460, "🕹️ Easy Mode", { font: "18px monospace", fill: "#00ff00" })
+    const easyBtn = this.add.text(450, 460, "🧩 Easy Mode", { font: "18px monospace", fill: "#00ff00" })
       .setInteractive().on('pointerdown', () => {
         this.easyMode = true;
-        // ✨ 5. Pass the *entire container* to be destroyed
         this.startGame(introContainer);
       });
 
-    // ✨ 6. Add the buttons to the container
+
     introContainer.add([startBtn, easyBtn]);
 
     const howToBtn = this.add.text(340, 500, "📘 How to Play", {
@@ -345,7 +346,6 @@ if (cmd === "Tell me a joke") {
   return;
 }
 
-  // Initialize trackers if not set yet
   this.commandCount = this.commandCount || 0;
   this.lastCommand = this.lastCommand || null;
   this.repeatCount = this.repeatCount || 0;
@@ -606,4 +606,3 @@ new Phaser.Game({ type:Phaser.AUTO, width:800, height:620, backgroundColor:"#111
 
 </body>
 </html>
-
