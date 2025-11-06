@@ -43,6 +43,11 @@ class BotScene extends Phaser.Scene {
     this.personality = "neutral";
     this.jokeCount = 0;
 
+    //reset
+    this.commandCount = 0;
+    this.lastCommand = null;
+    this.repeatCount = 0;
+
     // Background + bot sprite
     this.add.rectangle(400, 300, 800, 620, 0x0a0a0a, 1);
     this.bot = this.add.sprite(400, 300, 'bot').setScale(0.8);
@@ -345,11 +350,6 @@ if (cmd === "Tell me a joke") {
 
   return;
 }
-
-  this.commandCount = this.commandCount || 0;
-  this.lastCommand = this.lastCommand || null;
-  this.repeatCount = this.repeatCount || 0;
-
   // --- Shutdown restriction BEFORE counting ---
 if (cmd === "Shutdown" && this.commandCount < 10) {
   const remaining = 10 - this.commandCount;
@@ -606,5 +606,6 @@ new Phaser.Game({ type:Phaser.AUTO, width:800, height:620, backgroundColor:"#111
 
 </body>
 </html>
+
 
 
