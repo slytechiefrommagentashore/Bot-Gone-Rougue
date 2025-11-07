@@ -306,12 +306,14 @@ showIntro() {
 
     const startBtn = this.add.text(250, 460, "▶️ Start Mission", { font: "18px monospace", fill: "#00ff00" })
       .setInteractive().on('pointerdown', () => {
+        this.beep.play();
         this.easyMode = false;
         this.startGame(introContainer);
       });
 
     const easyBtn = this.add.text(450, 460, "🧩 Easy Mode", { font: "18px monospace", fill: "#00ff00" })
       .setInteractive().on('pointerdown', () => {
+        this.beep.play();
         this.easyMode = true;
         this.startGame(introContainer);
       });
@@ -665,3 +667,4 @@ new Phaser.Game({ type:Phaser.AUTO, width:800, height:620, backgroundColor:"#111
 
 </body>
 </html>
+
