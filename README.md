@@ -46,7 +46,7 @@ Built entirely in **HTML5 + JavaScript**, powered by the **Phaser 3** framework.
 ---
 
 ## Tech Stack
-- **Language:** JavaScript (ES6)
+- **Language:** HTML5, JavaScript (ES6)
 - **Framework:** [Phaser 3](https://phaser.io/phaser3)
 - **Assets:** AI-generated bot & glitch visuals (Nano)
 - **Audio:** Sound effects from Pixabay
