@@ -1,7 +1,13 @@
 #  Bot Gone Rogue — Mission Control
+## 🏆Winner: Chaos Street Legend (2nd Overall) @ Maximally GTA ’25
+## Ranked #2 out of 279 Participants
 
 A chaotic, humor-filled 2D browser game where your AI office assistant starts misinterpreting your commands.  
 Built for the **Hackathon: “The Heist — Chaos Mode”**, this project blends automation, AI personality, and unpredictable mayhem into one rogue experience.
+
+---
+
+[Playtest link](https://bot-gone-rougue.vercel.app/) | [DEMO](https://www.youtube.com/watch?v=B3YHgksGWfQ)
 
 ---
 
